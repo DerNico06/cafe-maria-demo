@@ -1,0 +1,39 @@
+---
+// Signature element from the design brief: chalkboard with wooden frame. Used for the start page hero and the menu.
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'div'> & { as?: 'div' | 'section' };
+
+const { as: Tag = 'div', class: className, ...rest } = Astro.props;
+---
+
+<Tag class:list={['chalkboard', className]} {...rest}>
+  <slot />
+</Tag>
+
+<style>
+  .chalkboard {
+    border: 10px solid var(--color-frame);
+    border-radius: var(--radius-s);
+    color: var(--color-chalk);
+    /* Chalk dust: faint wiped smudges plus SVG noise, both very low contrast so text stays readable. */
+    background:
+      radial-gradient(ellipse 60% 40% at 25% 20%, rgb(255 255 255 / 0.05), transparent 70%),
+      radial-gradient(ellipse 50% 35% at 80% 85%, rgb(255 255 255 / 0.04), transparent 70%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E"),
+      var(--color-board);
+    box-shadow: 0 1.5rem 2.5rem -1.5rem rgb(43 29 20 / 0.45);
+  }
+  .chalkboard :global(:focus-visible) { outline-color: var(--color-gold); }
+
+  /* Dotted line between a name and its price/time, like on a hand-written board. */
+  .chalkboard :global(.leader) {
+    flex: 1;
+    min-width: 1rem;
+    border-bottom: 2px dotted color-mix(in srgb, var(--color-chalk) 45%, transparent);
+  }
+
+  @media (min-width: 40rem) {
+    .chalkboard { border-width: 14px; }
+  }
+</style>

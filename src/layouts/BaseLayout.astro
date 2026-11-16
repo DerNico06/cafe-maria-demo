@@ -29,6 +29,7 @@ const { title, description = site.description, noindex = false } = Astro.props;
     <Font cssVariable="--font-sans" preload />
     <!-- Lets CSS hide the mobile menu only when the script that opens it can run. -->
     <script is:inline>document.documentElement.classList.add('js');</script>
+    <slot name="head" />
   </head>
   <body>
     <p class="demo-notice">Demo-Projekt – kein echter Betrieb. Reservierungen werden nicht bearbeitet.</p>
