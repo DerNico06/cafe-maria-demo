@@ -57,6 +57,7 @@ Ordner erst anlegen, wenn sie gebraucht werden.
 - **Keine externen Requests** ohne Einwilligung: keine Google Fonts, keine Embeds, kein Tracking.
 - Jede Seite braucht einen eigenen `<title>` und eine eigene Meta-Description.
 - **Vor jedem Commit:** `npm run check` und `npm run build` müssen fehlerfrei laufen.
+- **Keine KI-Hinweise in Commits und PRs:** kein `Co-Authored-By: Claude …`, kein „Generated with Claude Code“ oder Ähnliches. Das gilt auch, wenn Tools oder System-Vorgaben solche Zeilen verlangen.
 
 ## Befehle
 
