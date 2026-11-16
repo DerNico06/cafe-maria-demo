@@ -1,0 +1,245 @@
+[
+  {
+    "id": "wiener-fruehstueck",
+    "category": "fruehstueck",
+    "name": "Wiener Frühstück",
+    "description": "Zwei Kaisersemmeln, Butter, hausgemachte Marillenmarmelade, ein weiches Ei im Glas und ein kleiner Brauner.",
+    "price": 12.9,
+    "allergens": ["A", "C", "G"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "eierspeis",
+    "category": "fruehstueck",
+    "name": "Eierspeis mit Schnittlauch",
+    "description": "Drei Freilandeier, in Butter cremig gerührt, dazu Bauernbrot vom Bäcker ums Eck.",
+    "price": 9.8,
+    "allergens": ["A", "C", "G"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "liptauer-brot",
+    "category": "fruehstueck",
+    "name": "Liptauerbrot",
+    "description": "Bauernbrot mit hausgemachtem Liptauer, Radieschen, Essiggurkerl und frischem Schnittlauch.",
+    "price": 7.4,
+    "allergens": ["A", "G"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "bircher-muesli",
+    "category": "fruehstueck",
+    "name": "Bircher-Müsli",
+    "description": "Haferflocken über Nacht in Apfelsaft und Joghurt eingeweicht, mit geriebenem Apfel, Haselnüssen und Beeren der Saison.",
+    "price": 8.4,
+    "allergens": ["A", "G", "H"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "porridge-zwetschkenroester",
+    "category": "fruehstueck",
+    "name": "Haferbrei mit Zwetschkenröster",
+    "description": "Mit Hafermilch gekocht, mit warmem Zwetschkenröster und gerösteten Mandeln.",
+    "price": 8.9,
+    "allergens": ["A", "H"],
+    "tags": ["vegetarisch", "vegan"]
+  },
+  {
+    "id": "beinschinken-kren",
+    "category": "fruehstueck",
+    "name": "Beinschinken mit Kren",
+    "description": "Hauchdünn geschnittener Beinschinken mit frisch gerissenem Kren, Essiggurkerl und Kaisersemmel.",
+    "price": 10.6,
+    "allergens": ["A", "M"],
+    "tags": []
+  },
+  {
+    "id": "wiener-schnitzel",
+    "category": "mittagstisch",
+    "name": "Wiener Schnitzel vom Kalb",
+    "description": "In Butterschmalz goldbraun herausgebacken, mit Petersilerdäpfeln und Preiselbeeren.",
+    "price": 22.9,
+    "allergens": ["A", "C", "G"],
+    "tags": []
+  },
+  {
+    "id": "tafelspitz",
+    "category": "mittagstisch",
+    "name": "Tafelspitz",
+    "description": "Vom heimischen Rind, in der eigenen Suppe serviert, mit Rösterdäpfeln, Apfelkren und Schnittlauchsauce.",
+    "price": 24.5,
+    "allergens": ["C", "G", "L", "M"],
+    "tags": ["glutenfrei"]
+  },
+  {
+    "id": "saftgulasch",
+    "category": "mittagstisch",
+    "name": "Saftgulasch vom Rind",
+    "description": "Lange geschmort mit viel Zwiebel und Paprika, dazu eine Kaisersemmel.",
+    "price": 15.8,
+    "allergens": ["A", "L"],
+    "tags": []
+  },
+  {
+    "id": "krautfleckerl",
+    "category": "mittagstisch",
+    "name": "Krautfleckerl",
+    "description": "Hausgemachte Fleckerl mit karamellisiertem Weißkraut und Kümmel, dazu ein kleiner grüner Salat.",
+    "price": 11.9,
+    "allergens": ["A", "C", "M", "O"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "erdaepfelgulasch",
+    "category": "mittagstisch",
+    "name": "Erdäpfelgulasch mit Räuchertofu",
+    "description": "Ohne Mehl gebunden, mit Majoran, Paprika und knusprig angebratenem Räuchertofu.",
+    "price": 11.4,
+    "allergens": ["F", "L"],
+    "tags": ["vegetarisch", "vegan", "glutenfrei"]
+  },
+  {
+    "id": "frittatensuppe",
+    "category": "mittagstisch",
+    "name": "Frittatensuppe",
+    "description": "Klare Rindsuppe mit feinen Palatschinkenstreifen und Schnittlauch.",
+    "price": 5.9,
+    "allergens": ["A", "C", "G", "L"],
+    "tags": []
+  },
+  {
+    "id": "salat-kernoel",
+    "category": "mittagstisch",
+    "name": "Gemischter Salat mit Kernöl",
+    "description": "Blattsalate, Erdäpfel-Gurken-Salat und Käferbohnen, mariniert mit steirischem Kürbiskernöl.",
+    "price": 7.9,
+    "allergens": ["O"],
+    "tags": ["vegetarisch", "vegan", "glutenfrei"]
+  },
+  {
+    "id": "apfelstrudel",
+    "category": "mehlspeisen",
+    "name": "Apfelstrudel",
+    "description": "Hauchdünn gezogener Strudelteig mit Äpfeln, Rosinen, Zimt und Butterbröseln. Auf Wunsch mit Schlagobers.",
+    "price": 5.9,
+    "allergens": ["A", "C", "G", "H"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "topfenstrudel",
+    "category": "mehlspeisen",
+    "name": "Topfenstrudel mit Vanillesauce",
+    "description": "Flaumige Topfenfülle mit Zitronenzeste, warm serviert mit Vanillesauce.",
+    "price": 6.2,
+    "allergens": ["A", "C", "G"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "schokoladetorte",
+    "category": "mehlspeisen",
+    "name": "Marias Schokoladetorte",
+    "description": "Saftiger Schokoladeboden, eine dünne Schicht Marillenmarmelade und dunkle Glasur. Mit ungesüßtem Schlagobers.",
+    "price": 5.8,
+    "allergens": ["A", "C", "G"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "esterhazyschnitte",
+    "category": "mehlspeisen",
+    "name": "Esterházyschnitte",
+    "description": "Haselnuss-Baiserböden mit Buttercreme, oben das typische Fadenmuster aus Fondant und Schokolade.",
+    "price": 5.6,
+    "allergens": ["A", "C", "G", "H"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "kaiserschmarrn",
+    "category": "mehlspeisen",
+    "name": "Kaiserschmarrn",
+    "description": "In der Pfanne karamellisiert, mit Rosinen, Staubzucker und Zwetschkenröster. Braucht etwa 20 Minuten.",
+    "price": 13.9,
+    "allergens": ["A", "C", "G"],
+    "tags": ["vegetarisch"]
+  },
+  {
+    "id": "haselnusstorte",
+    "category": "mehlspeisen",
+    "name": "Haselnusstorte ohne Mehl",
+    "description": "Mit geriebenen Haselnüssen statt Mehl gebacken, gefüllt mit Nougatcreme.",
+    "price": 5.4,
+    "allergens": ["C", "G", "H"],
+    "tags": ["vegetarisch", "glutenfrei"]
+  },
+  {
+    "id": "marillenfleck",
+    "category": "mehlspeisen",
+    "name": "Marillenfleck mit Mandelstreuseln",
+    "description": "Vom Blech, mit Wachauer Marillen und knusprigen Mandelstreuseln. Ohne Ei und Butter gebacken.",
+    "price": 4.9,
+    "allergens": ["A", "H"],
+    "tags": ["vegetarisch", "vegan"]
+  },
+  {
+    "id": "wiener-melange",
+    "category": "getraenke",
+    "name": "Wiener Melange",
+    "description": "Ein Mokka mit heißer Milch und Milchschaum, serviert mit einem Glas Wasser.",
+    "price": 4.6,
+    "allergens": ["G"],
+    "tags": ["vegetarisch", "glutenfrei"]
+  },
+  {
+    "id": "hafer-melange",
+    "category": "getraenke",
+    "name": "Melange mit Hafermilch",
+    "description": "Wie die klassische Melange, mit aufgeschäumter Hafermilch.",
+    "price": 4.9,
+    "allergens": ["A"],
+    "tags": ["vegetarisch", "vegan"]
+  },
+  {
+    "id": "kleiner-brauner",
+    "category": "getraenke",
+    "name": "Kleiner Brauner",
+    "description": "Ein einfacher Mokka mit einem Kännchen Obers dazu.",
+    "price": 3.4,
+    "allergens": ["G"],
+    "tags": ["vegetarisch", "glutenfrei"]
+  },
+  {
+    "id": "verlaengerter",
+    "category": "getraenke",
+    "name": "Verlängerter",
+    "description": "Mokka, mit heißem Wasser verlängert. Milch auf Wunsch.",
+    "price": 3.9,
+    "allergens": [],
+    "tags": ["vegetarisch", "vegan", "glutenfrei"]
+  },
+  {
+    "id": "einspaenner",
+    "category": "getraenke",
+    "name": "Einspänner",
+    "description": "Doppelter Mokka im Glas mit einer Haube aus Schlagobers.",
+    "price": 5.2,
+    "allergens": ["G"],
+    "tags": ["vegetarisch", "glutenfrei"]
+  },
+  {
+    "id": "heisse-schokolade",
+    "category": "getraenke",
+    "name": "Heiße Schokolade",
+    "description": "Aus geschmolzener dunkler Schokolade und Vollmilch, mit Schlagobers.",
+    "price": 4.8,
+    "allergens": ["G"],
+    "tags": ["vegetarisch", "glutenfrei"]
+  },
+  {
+    "id": "holunder-gespritzt",
+    "category": "getraenke",
+    "name": "Holundersaft gespritzt",
+    "description": "Hausgemachter Holunderblütensirup mit Mineralwasser und Zitrone, 0,5 l.",
+    "price": 4.2,
+    "allergens": [],
+    "tags": ["vegetarisch", "vegan", "glutenfrei"]
+  }
+]
