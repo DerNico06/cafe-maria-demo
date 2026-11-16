@@ -1,0 +1,119 @@
+/* Design tokens: Café Maria. Colours checked against WCAG 2.2 AA (ratios noted per pair). */
+:root {
+  /* Colours */
+  --color-creme: #f2e8d5;        /* page background */
+  --color-creme-light: #faf5ea;  /* raised surfaces */
+  --color-mokka: #2b1d14;        /* body text, ~14:1 on creme */
+  --color-mokka-soft: #5e4b3c;   /* secondary text, ~6.8:1 on creme */
+  --color-green: #24483a;        /* primary actions, footer; ~8.4:1 on creme */
+  --color-green-dark: #1a3529;   /* hover / pressed */
+  --color-gold: #d4b57a;         /* text ONLY on dark surfaces: ~5.2:1 on green, ~7.4:1 on board */
+  --color-brass: #a8823f;        /* decorative lines only, never text */
+  --color-board: #232b26;        /* chalkboard */
+  --color-chalk: #eeeae0;        /* chalk text, ~12:1 on board */
+  --color-focus: #1f5fbf;        /* focus ring on light backgrounds */
+
+  /* Type */
+  --font-display: var(--font-serif), Georgia, serif;
+  --font-body: var(--font-sans), system-ui, sans-serif;
+  --text-sm: 0.875rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5625rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: clamp(2.2rem, 1.6rem + 3vw, 3.4rem);
+  --text-display: clamp(3rem, 1.6rem + 7vw, 7.5rem);
+  --leading-tight: 1.1;
+  --leading-body: 1.6;
+
+  /* Spacing */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-s: 0.75rem;
+  --space-m: 1rem;
+  --space-l: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+  --gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+  --content-width: 72rem;
+  --measure: 34em;
+
+  /* Radii: small for controls, arch for the window motif */
+  --radius-s: 4px;
+  --radius-m: 10px;
+  --radius-arch: 50% 50% 0 0 / 22% 22% 0 0;
+
+  --header-height: 4rem;
+}
+
+/* Reset */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-height) + var(--space-m)); }
+img, svg { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; }
+
+body {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-creme);
+  color: var(--color-mokka);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+main { flex: 1; }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+p { max-width: var(--measure); text-wrap: pretty; }
+
+a { color: inherit; text-underline-offset: 0.2em; }
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem; /* 44px touch target */
+  padding: var(--space-xs) var(--space-l);
+  border: 2px solid transparent;
+  border-radius: var(--radius-s);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn-primary { background: var(--color-green); color: var(--color-creme-light); }
+.btn-primary:hover { background: var(--color-green-dark); }
+.btn-outline { border-color: currentColor; }
+.btn-outline:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

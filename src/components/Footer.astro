@@ -1,0 +1,100 @@
+---
+import { site, openingHours, formatHours } from '../data/site';
+---
+
+<footer class="site-footer">
+  <div class="grid">
+    <section aria-labelledby="footer-hours">
+      <h2 id="footer-hours">Öffnungszeiten</h2>
+      <dl class="hours">
+        {openingHours.map((h) => (
+          <div>
+            <dt>{h.label}</dt>
+            <dd>{formatHours(h)}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    <section aria-labelledby="footer-contact">
+      <h2 id="footer-contact">Kontakt</h2>
+      <p class="phone"><a href={site.phone.href}>{site.phone.display}</a></p>
+      <p><a href={`mailto:${site.email}`}>{site.email}</a></p>
+      <address>
+        {site.address.street}<br />
+        {site.address.zip} {site.address.city}
+      </address>
+    </section>
+
+    <section aria-labelledby="footer-name" class="brand">
+      <h2 id="footer-name">{site.name}</h2>
+      <p>{site.slogan}</p>
+    </section>
+  </div>
+
+  <div class="legal">
+    <p>Demo-Projekt – kein echter Betrieb.</p>
+    <ul>
+      <li><a href="/impressum">Impressum</a></li>
+      <li><a href="/datenschutz">Datenschutz</a></li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--color-green);
+    color: var(--color-creme-light);
+    padding: var(--space-2xl) 0 var(--space-l);
+  }
+  /* Gutter inside the max-width box, same as the header bar, so columns line up. */
+  .grid, .legal { padding-inline: var(--gutter); }
+  .site-footer :focus-visible { outline-color: var(--color-gold); }
+
+  .grid {
+    display: grid;
+    gap: var(--space-xl);
+    max-width: var(--content-width);
+    margin-inline: auto;
+  }
+
+  h2 {
+    margin-bottom: var(--space-s);
+    color: var(--color-gold);
+    font-size: var(--text-lg);
+  }
+
+  .hours div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-m);
+    max-width: 22rem;
+    padding-block: var(--space-2xs);
+    border-bottom: 1px dotted color-mix(in srgb, var(--color-creme-light) 35%, transparent);
+  }
+  .hours dd { font-variant-numeric: tabular-nums; }
+
+  .phone { font-size: var(--text-xl); font-family: var(--font-display); }
+  .site-footer a { display: inline-block; padding-block: var(--space-2xs); }
+  address { margin-top: var(--space-s); font-style: normal; }
+
+  .brand h2 { font-size: var(--text-2xl); }
+
+  .legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-s);
+    max-width: var(--content-width);
+    margin: var(--space-2xl) auto 0;
+    padding-top: var(--space-m);
+    border-top: 1px solid color-mix(in srgb, var(--color-creme-light) 25%, transparent);
+    font-size: var(--text-sm);
+  }
+  .legal ul { display: flex; gap: var(--space-l); padding: 0; list-style: none; }
+
+  @media (min-width: 48rem) {
+    .grid { grid-template-columns: 1.2fr 1fr 1fr; }
+    .brand { order: -1; }
+  }
+</style>
