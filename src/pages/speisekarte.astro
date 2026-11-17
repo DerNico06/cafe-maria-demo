@@ -1,0 +1,285 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ChalkBoard from '../components/ChalkBoard.astro';
+import { lunchHours } from '../data/site';
+import { menuCategories, allergens, menuTags, type MenuCategory } from '../data/menu';
+
+const items = (await getCollection('menu')).map((e) => e.data).sort((a, b) => a.order - b.order);
+const sections = (Object.keys(menuCategories) as MenuCategory[]).map((key) => ({
+  key,
+  label: menuCategories[key],
+  items: items.filter((i) => i.category === key),
+}));
+
+const price = new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' });
+const notes: Partial<Record<MenuCategory, string>> = {
+  mittagstisch: `${lunchHours.days}, ${lunchHours.time}`,
+};
+
+// schema.org Menu for search engines (requirement: structured data incl. menu).
+const diets = { vegetarisch: 'VegetarianDiet', vegan: 'VeganDiet', glutenfrei: 'GlutenFreeDiet' } as const;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Menu',
+  name: 'Speisekarte Café Maria',
+  inLanguage: 'de-AT',
+  hasMenuSection: sections.map((s) => ({
+    '@type': 'MenuSection',
+    name: s.label,
+    hasMenuItem: s.items.map((i) => ({
+      '@type': 'MenuItem',
+      name: i.name,
+      description: i.description,
+      offers: { '@type': 'Offer', price: i.price.toFixed(2), priceCurrency: 'EUR' },
+      ...(i.tags.length && { suitableForDiet: i.tags.map((t) => `https://schema.org/${diets[t]}`) }),
+    })),
+  })),
+};
+---
+
+<BaseLayout
+  title="Speisekarte | Café Maria"
+  description="Frühstück, Mittagstisch, Mehlspeisen und Wiener Kaffee: die Speisekarte vom Café Maria mit Preisen und Allergenkennzeichnung."
+>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
+
+  <div class="page">
+    <header class="intro">
+      <h1>Speisekarte</h1>
+      <p>
+        Preise in Euro inklusive Mehrwertsteuer. Buchstaben bei den Gerichten:
+        siehe <a href="#allergene">Allergen-Legende</a>.
+      </p>
+    </header>
+
+    <nav class="jump" aria-label="Kategorien der Speisekarte">
+      <ul>
+        {sections.map((s) => <li data-jump={s.key}><a href={`#${s.key}`}>{s.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <fieldset class="filter">
+      <legend>Nur anzeigen:</legend>
+      <div class="filter-options">
+        {Object.entries(menuTags).map(([key, label]) => (
+          <label>
+            <input type="checkbox" name="tag" value={key} />
+            {label}
+          </label>
+        ))}
+      </div>
+      <p class="filter-status" role="status" aria-live="polite"></p>
+    </fieldset>
+
+    <div class="boards">
+      {sections.map((s) => (
+        <ChalkBoard as="section" class="board" id={s.key} aria-labelledby={`${s.key}-title`} data-section>
+          <h2 id={`${s.key}-title`}>{s.label}</h2>
+          {notes[s.key] && <p class="note">{notes[s.key]}</p>}
+
+          <ul class="dishes">
+            {s.items.map((i) => (
+              <li class="dish" data-tags={i.tags.join(' ')}>
+                <div class="dish-head">
+                  <h3>{i.name}</h3>
+                  <span class="leader" aria-hidden="true"></span>
+                  <p class="price">
+                    <span class="visually-hidden">Preis: </span>{price.format(i.price)}
+                  </p>
+                </div>
+                <p class="description">{i.description}</p>
+                {(i.tags.length > 0 || i.allergens.length > 0) && (
+                  <p class="meta">
+                    {i.tags.map((t) => <span class="tag">{menuTags[t]}</span>)}
+                    {i.allergens.length > 0 && (
+                      <span class="allergen-codes">
+                        <span aria-hidden="true">{i.allergens.join(' ')}</span>
+                        <span class="visually-hidden">
+                          Allergene: {i.allergens.map((a) => allergens[a]).join(', ')}
+                        </span>
+                      </span>
+                    )}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </ChalkBoard>
+      ))}
+    </div>
+
+    <p class="empty" hidden>
+      Kein Gericht erfüllt alle gewählten Filter. Entfernen Sie einen Filter, um wieder mehr zu sehen.
+    </p>
+
+    <section class="legend" id="allergene" aria-labelledby="allergene-title">
+      <h2 id="allergene-title">Allergen-Legende</h2>
+      <p>
+        Kennzeichnung nach der österreichischen Allergeninformationsverordnung. Bei Unverträglichkeiten
+        fragen Sie bitte unser Service-Team, wir beraten Sie gerne.
+      </p>
+      <dl>
+        {Object.entries(allergens).map(([code, name]) => (
+          <div><dt>{code}</dt><dd>{name}</dd></div>
+        ))}
+      </dl>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  const boxes = [...document.querySelectorAll<HTMLInputElement>('.filter input[name="tag"]')];
+  const dishes = [...document.querySelectorAll<HTMLElement>('.dish')];
+  const status = document.querySelector<HTMLElement>('.filter-status');
+  const empty = document.querySelector<HTMLElement>('.empty');
+
+  function applyFilter() {
+    const wanted = boxes.filter((b) => b.checked).map((b) => b.value);
+    let visible = 0;
+    for (const dish of dishes) {
+      const tags = (dish.dataset.tags ?? '').split(' ');
+      dish.hidden = !wanted.every((t) => tags.includes(t));
+      if (!dish.hidden) visible++;
+    }
+    // Hide whole boards (and their jump links) that have nothing left to show.
+    for (const section of document.querySelectorAll<HTMLElement>('[data-section]')) {
+      const hasVisible = section.querySelector('.dish:not([hidden])') !== null;
+      section.hidden = !hasVisible;
+      const jump = document.querySelector<HTMLElement>(`[data-jump="${section.id}"]`);
+      if (jump) jump.hidden = !hasVisible;
+    }
+    if (empty) empty.hidden = visible > 0;
+    if (status) {
+      status.textContent = wanted.length
+        ? `${visible} von ${dishes.length} Gerichten angezeigt.`
+        : '';
+    }
+  }
+
+  for (const box of boxes) box.addEventListener('change', applyFilter);
+</script>
+
+<style>
+  .page {
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding: var(--space-xl) var(--gutter) var(--space-2xl);
+  }
+
+  .intro h1 { font-size: var(--text-3xl); }
+  .intro p { margin-top: var(--space-s); color: var(--color-mokka-soft); }
+
+  .jump ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-l);
+    margin-top: var(--space-l);
+    padding: 0;
+    list-style: none;
+  }
+  .jump a {
+    display: inline-block;
+    padding-block: var(--space-xs);
+    font-family: var(--font-display);
+    text-decoration-color: var(--color-brass);
+    text-decoration-thickness: 2px;
+  }
+
+  /* The filter only works with JS, so without it the controls are not offered at all. */
+  :global(html:not(.js)) .filter { display: none; }
+  .filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--space-m);
+    margin-top: var(--space-m);
+    padding: var(--space-2xs) var(--space-m);
+    border: 1px solid color-mix(in srgb, var(--color-brass) 60%, transparent);
+    border-radius: var(--radius-m);
+    background: var(--color-creme-light);
+  }
+  /* float lets the legend sit inline with the options instead of on the border */
+  .filter legend { float: left; margin-right: var(--space-m); padding-block: var(--space-s); font-weight: 600; }
+  .filter-options { display: flex; flex-wrap: wrap; gap: 0 var(--space-l); }
+  .filter-status { flex-basis: 100%; }
+  .filter label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: 2.75rem;
+    cursor: pointer;
+  }
+  .filter input { width: 1.25rem; height: 1.25rem; accent-color: var(--color-green); }
+  .filter-status:empty { display: none; }
+  .filter-status { margin-bottom: var(--space-xs); font-size: var(--text-sm); color: var(--color-mokka-soft); }
+
+  .boards {
+    display: grid;
+    gap: var(--space-xl);
+    margin-top: var(--space-l);
+  }
+  .board { padding: var(--space-l); scroll-margin-top: calc(var(--header-height) + var(--space-m)); }
+  .board[hidden] { display: none; }
+
+  h2 {
+    font-size: var(--text-2xl);
+    text-shadow: 0 0 1px rgb(238 234 224 / 0.6); /* soft chalk edge, same as the hero */
+  }
+  .note { margin-top: var(--space-2xs); color: var(--color-gold); }
+
+  .dishes { margin-top: var(--space-l); padding: 0; list-style: none; }
+  .dish + .dish { margin-top: var(--space-l); }
+
+  .dish-head { display: flex; align-items: baseline; gap: var(--space-xs); }
+  h3 {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .price { flex-shrink: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  .description { margin-top: var(--space-2xs); color: var(--color-chalk-soft); }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+    font-size: var(--text-sm);
+  }
+  .tag {
+    padding: 0 var(--space-xs);
+    border: 1px solid var(--color-gold);
+    border-radius: var(--radius-s);
+    color: var(--color-gold);
+  }
+  .allergen-codes { color: var(--color-chalk-soft); letter-spacing: 0.08em; }
+
+  .empty {
+    margin-top: var(--space-xl);
+    padding: var(--space-m);
+    border-left: 4px solid var(--color-green);
+    background: var(--color-creme-light);
+  }
+
+  .legend { margin-top: var(--space-2xl); scroll-margin-top: calc(var(--header-height) + var(--space-m)); }
+  .legend h2 { font-size: var(--text-2xl); text-shadow: none; }
+  .legend > p { margin-top: var(--space-s); color: var(--color-mokka-soft); }
+  .legend dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: var(--space-2xs) var(--space-l);
+    margin-top: var(--space-l);
+  }
+  .legend dl div { display: flex; gap: var(--space-s); padding-block: var(--space-2xs); }
+  .legend dt { min-width: 1.25rem; font-weight: 700; }
+
+  @media (min-width: 56rem) {
+    .jump a { font-size: var(--text-lg); }
+    .boards { grid-template-columns: 1fr 1fr; align-items: start; }
+    .board { padding: var(--space-xl); }
+  }
+</style>

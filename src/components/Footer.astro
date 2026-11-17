@@ -1,5 +1,8 @@
 ---
-import { site, openingHours, formatHours } from '../data/site';
+import { site } from '../data/site';
+import { getOpeningHours, formatHours } from '../data/hours';
+
+const openingHours = await getOpeningHours();
 ---
 
 <footer class="site-footer">

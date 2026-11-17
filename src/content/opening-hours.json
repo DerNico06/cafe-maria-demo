@@ -1,0 +1,6 @@
+[
+  { "id": "montag", "label": "Montag", "days": [1], "open": null, "close": null },
+  { "id": "dienstag-freitag", "label": "Dienstag – Freitag", "days": [2, 3, 4, 5], "open": "08:00", "close": "19:00" },
+  { "id": "samstag", "label": "Samstag", "days": [6], "open": "09:00", "close": "19:00" },
+  { "id": "sonntag", "label": "Sonntag & Feiertag", "days": [0], "open": "09:00", "close": "17:00" }
+]

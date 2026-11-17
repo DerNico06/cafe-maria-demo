@@ -1,12 +1,16 @@
 ---
 // Start page. Hero = the chalkboard standing at the café door (signature element from the design brief).
 import BaseLayout from '../layouts/BaseLayout.astro';
+import ChalkBoard from '../components/ChalkBoard.astro';
 import { site, lunchHours } from '../data/site';
+import { getOpeningHours } from '../data/hours';
+
+const closedDays = (await getOpeningHours()).filter((h) => !h.open).map((h) => h.label).join(', ');
 ---
 
 <BaseLayout title="Café Maria – Wiener Kaffeehaus in Neubau">
   <section class="hero" aria-labelledby="hero-title">
-    <div class="board">
+    <ChalkBoard class="board">
       <h1 id="hero-title">{site.name}</h1>
       <p class="slogan">{site.slogan}</p>
 
@@ -15,13 +19,13 @@ import { site, lunchHours } from '../data/site';
         <li><span>{lunchHours.label}</span><span class="leader" aria-hidden="true"></span><span>{lunchHours.time}</span></li>
         <li><span>Mehlspeisen</span><span class="leader" aria-hidden="true"></span><span>den ganzen Tag</span></li>
       </ul>
-      <p class="closed">Mittagstisch {lunchHours.days}, Montag Ruhetag</p>
+      <p class="closed">Mittagstisch {lunchHours.days}, {closedDays} Ruhetag</p>
 
       <div class="actions">
         <a class="btn btn-chalk" href="/kontakt#reservierung">Tisch reservieren</a>
         <a class="btn btn-outline" href="/speisekarte">Speisekarte ansehen</a>
       </div>
-    </div>
+    </ChalkBoard>
   </section>
 </BaseLayout>
 
@@ -34,19 +38,8 @@ import { site, lunchHours } from '../data/site';
     max-width: 44rem;
     margin-inline: auto;
     padding: var(--space-xl) var(--space-l);
-    border: 10px solid #5a3d27; /* wooden frame */
-    border-radius: var(--radius-s);
-    color: var(--color-chalk);
-    /* Chalk dust: faint wiped smudges plus SVG noise, both very low contrast so text stays readable. */
-    background:
-      radial-gradient(ellipse 60% 40% at 25% 20%, rgb(255 255 255 / 0.05), transparent 70%),
-      radial-gradient(ellipse 50% 35% at 80% 85%, rgb(255 255 255 / 0.04), transparent 70%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E"),
-      var(--color-board);
-    box-shadow: 0 1.5rem 2.5rem -1.5rem rgb(43 29 20 / 0.45);
     text-align: center;
   }
-  .board :focus-visible { outline-color: var(--color-gold); }
 
   h1 {
     font-size: var(--text-display);
@@ -75,11 +68,6 @@ import { site, lunchHours } from '../data/site';
     padding-block: var(--space-2xs);
   }
   .offers li span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .leader {
-    flex: 1;
-    min-width: 1rem;
-    border-bottom: 2px dotted rgb(238 234 224 / 0.45);
-  }
 
   .closed {
     margin: var(--space-s) auto 0;
@@ -99,7 +87,7 @@ import { site, lunchHours } from '../data/site';
 
   @media (min-width: 40rem) {
     .hero { padding-top: var(--space-xl); }
-    .board { max-width: 58rem; padding: var(--space-xl); border-width: 14px; }
+    .board { max-width: 58rem; padding: var(--space-xl); }
     h1 { font-size: clamp(3rem, 1rem + 6vw, 6rem); } /* one line, so the buttons stay above the fold */
   }
 </style>

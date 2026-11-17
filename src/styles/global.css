@@ -11,6 +11,8 @@
   --color-brass: #a8823f;        /* decorative lines only, never text */
   --color-board: #232b26;        /* chalkboard */
   --color-chalk: #eeeae0;        /* chalk text, ~12:1 on board */
+  --color-chalk-soft: color-mix(in srgb, var(--color-chalk) 80%, var(--color-board)); /* secondary chalk text, ~8:1 on board */
+  --color-frame: #5a3d27;        /* wooden board frame, decorative */
   --color-focus: #1f5fbf;        /* focus ring on light backgrounds */
 
   /* Type */

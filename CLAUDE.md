@@ -32,8 +32,9 @@ src/
   pages/        Routen (eine Datei pro Seite)
   layouts/      Seitenrahmen (Head, Navigation, Footer)
   components/   wiederverwendbare Astro-Komponenten
-  content/      Speisekarte als Content Collection mit Schema (Allergene A–R Pflicht)
-  data/         zentrale Daten: Öffnungszeiten, Kontakt, Adresse (nur hier pflegen)
+  content/      Inhalte als JSON: menu.json (Speisekarte), opening-hours.json (Öffnungszeiten inkl. Ruhetag)
+  content.config.ts  Zod-Schemas der Collections inkl. Inhaltsregeln (vegan ⇒ keine tierischen Allergene, glutenfrei ⇒ kein A)
+  data/         site.ts (Name, Kontakt, Adresse), menu.ts (Kategorien, Allergene A–R, Tags), hours.ts (Öffnungszeiten lesen und formatieren)
   styles/       globale Styles und Design-Tokens (CSS Custom Properties)
 public/         statische Dateien (Favicon, robots.txt, lokale Schriften)
 docs/           Anforderungen und Projektdokumente
