@@ -14,6 +14,7 @@
   --color-chalk-soft: color-mix(in srgb, var(--color-chalk) 80%, var(--color-board)); /* secondary chalk text, ~8:1 on board */
   --color-frame: #5a3d27;        /* wooden board frame, decorative */
   --color-focus: #1f5fbf;        /* focus ring on light backgrounds */
+  --color-error: #a1251b;        /* form errors, ~6.2:1 on creme */
 
   /* Type */
   --font-display: var(--font-serif), Georgia, serif;
