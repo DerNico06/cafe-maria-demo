@@ -1,0 +1,205 @@
+---
+// Reservation form. Works without JS (server validation via the action); the script only shows the same errors earlier.
+import { actions } from 'astro:actions';
+import { MAX_GUESTS, BOOKING_DAYS_AHEAD, viennaNow, addDays } from '../data/reservation';
+
+interface Props {
+  /** First error message per field, from the server. */
+  errors?: Record<string, string | undefined>;
+  /** Error that belongs to no single field (rate limit, mail failure). */
+  formError?: string;
+  /** Values to put back after a failed submit. */
+  values?: Record<string, string>;
+}
+
+const { errors = {}, formError, values = {} } = Astro.props;
+const today = viennaNow().date;
+
+const fields = [
+  { name: 'name', label: 'Name', type: 'text', autocomplete: 'name' },
+  { name: 'email', label: 'E-Mail', type: 'email', autocomplete: 'email' },
+  { name: 'phone', label: 'Telefon', type: 'tel', autocomplete: 'tel', hint: 'Für Rückfragen zu Ihrer Reservierung.' },
+  { name: 'date', label: 'Datum', type: 'date', min: today, max: addDays(today, BOOKING_DAYS_AHEAD) },
+  { name: 'time', label: 'Uhrzeit', type: 'time', step: 900 },
+  { name: 'guests', label: 'Personen', type: 'number', min: 1, max: MAX_GUESTS, inputmode: 'numeric', hint: `1 bis ${MAX_GUESTS} Personen, größere Gruppen bitte telefonisch.` },
+] as const;
+
+const labels: Record<string, string> = { ...Object.fromEntries(fields.map((f) => [f.name, f.label])), note: 'Anmerkung' };
+const listed = Object.entries(errors).filter(([, msg]) => msg);
+const hasErrors = listed.length > 0 || Boolean(formError);
+const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `${name}-error`].filter(Boolean).join(' ');
+---
+
+<form
+  class="reservation"
+  method="POST"
+  action={`${actions.reserve.queryString}#reservierung`}
+  novalidate
+  data-reservation-form
+>
+  <div class="error-summary" tabindex="-1" hidden={!hasErrors} data-error-summary>
+    <h3>Bitte prüfen Sie Ihre Angaben</h3>
+    <ul>
+      {formError && <li>{formError}</li>}
+      {listed.map(([name, msg]) => <li><a href={`#res-${name}`}>{labels[name]}: {msg}</a></li>)}
+    </ul>
+  </div>
+
+  <div class="grid">
+    {fields.map((f) => {
+      const hint = 'hint' in f ? f.hint : undefined;
+      return (
+        <div class:list={['field', `field-${f.name}`]}>
+          <label for={`res-${f.name}`}>{f.label}</label>
+          {hint && <p class="hint" id={`${f.name}-hint`}>{hint}</p>}
+          <input
+            id={`res-${f.name}`}
+            name={f.name}
+            type={f.type}
+            required
+            value={values[f.name]}
+            autocomplete={'autocomplete' in f ? f.autocomplete : undefined}
+            min={'min' in f ? f.min : undefined}
+            max={'max' in f ? f.max : undefined}
+            step={'step' in f ? f.step : undefined}
+            inputmode={'inputmode' in f ? f.inputmode : undefined}
+            aria-describedby={describedBy(f.name, hint)}
+            aria-invalid={errors[f.name] ? 'true' : undefined}
+          />
+          <p class="field-error" id={`${f.name}-error`}>{errors[f.name]}</p>
+        </div>
+      );
+    })}
+
+    <div class="field field-note">
+      <label for="res-note">Anmerkung <span class="optional">(optional)</span></label>
+      <textarea
+        id="res-note"
+        name="note"
+        rows="4"
+        maxlength="500"
+        aria-describedby="note-error"
+        aria-invalid={errors.note ? 'true' : undefined}
+      >{values.note}</textarea>
+      <p class="field-error" id="note-error">{errors.note}</p>
+    </div>
+  </div>
+
+  <!-- Spam trap: hidden from people and assistive tech, bots tend to fill every field. -->
+  <div class="trap" aria-hidden="true">
+    <label for="res-website">Website (bitte leer lassen)</label>
+    <input id="res-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+  <input type="hidden" name="startedAt" value={Date.now()} />
+
+  <p class="demo-hint">Demo: Ihre Anfrage geht nur an den Betreiber dieser Beispielseite und wird nicht als echte Reservierung bearbeitet.</p>
+  <button class="btn btn-primary" type="submit" data-submit>Reservierung anfragen</button>
+</form>
+
+<script>
+  import { reservationSchema } from '../data/reservation';
+
+  const form = document.querySelector<HTMLFormElement>('[data-reservation-form]');
+  const summary = form?.querySelector<HTMLElement>('[data-error-summary]');
+
+  // After a failed server round trip, move focus to the errors so screen readers announce them.
+  // Waits for load: the #reservierung fragment scroll runs after module scripts and would reset focus to <body>.
+  if (summary && !summary.hidden) addEventListener('load', () => setTimeout(() => summary.focus()));
+
+  function showErrors(messages: Map<string, string>) {
+    if (!form || !summary) return;
+    for (const el of form.querySelectorAll<HTMLElement>('.field-error')) {
+      const name = el.id.replace(/-error$/, '');
+      el.textContent = messages.get(name) ?? '';
+      const input = form.elements.namedItem(name);
+      if (input instanceof HTMLElement) {
+        if (messages.has(name)) input.setAttribute('aria-invalid', 'true');
+        else input.removeAttribute('aria-invalid');
+      }
+    }
+    const list = summary.querySelector('ul');
+    if (list) {
+      list.replaceChildren(
+        ...[...messages].map(([name, msg]) => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = `#res-${name}`;
+          a.textContent = `${form.querySelector(`label[for="res-${name}"]`)?.firstChild?.textContent?.trim()}: ${msg}`;
+          li.append(a);
+          return li;
+        }),
+      );
+    }
+    summary.hidden = messages.size === 0;
+  }
+
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const result = reservationSchema.safeParse(Object.fromEntries(new FormData(form)));
+    if (result.success) {
+      const button = form.querySelector<HTMLButtonElement>('[data-submit]');
+      if (button) {
+        // Prevents a second mail from a double click while the page loads.
+        button.disabled = true;
+        button.textContent = 'Wird gesendet …';
+      }
+      form.submit();
+      return;
+    }
+    // First message per field, same as the server shows.
+    const messages = new Map<string, string>();
+    for (const issue of result.error.issues) {
+      const name = String(issue.path[0]);
+      if (!messages.has(name)) messages.set(name, issue.message);
+    }
+    showErrors(messages);
+    summary?.focus();
+  });
+</script>
+
+<style>
+  .reservation { display: grid; gap: var(--space-l); }
+
+  .grid { display: grid; gap: var(--space-m) var(--space-l); }
+  .field { display: grid; gap: var(--space-2xs); align-content: start; }
+
+  label { font-weight: 600; }
+  .optional, .hint { font-weight: 400; color: var(--color-mokka-soft); }
+  .hint { font-size: var(--text-sm); }
+
+  input, textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: var(--space-xs) var(--space-s);
+    border: 2px solid var(--color-mokka-soft);
+    border-radius: var(--radius-s);
+    background: var(--color-creme-light);
+    color: var(--color-mokka);
+  }
+  textarea { resize: vertical; }
+  [aria-invalid='true'] { border-color: var(--color-error); }
+
+  .field-error { color: var(--color-error); font-size: var(--text-sm); font-weight: 600; }
+  .field-error:empty { display: none; }
+
+  .error-summary {
+    padding: var(--space-m);
+    border-left: 4px solid var(--color-error);
+    background: var(--color-creme-light);
+  }
+  .error-summary[hidden] { display: none; }
+  .error-summary h3 { font-size: var(--text-lg); }
+  .error-summary ul { margin-top: var(--space-xs); padding-left: var(--space-l); }
+  .error-summary a { color: var(--color-error); }
+
+  .trap { position: absolute; left: -100vw; width: 1px; height: 1px; overflow: hidden; }
+
+  .demo-hint { font-size: var(--text-sm); color: var(--color-mokka-soft); }
+  .btn { justify-self: start; }
+  .btn:disabled { opacity: 0.7; cursor: progress; }
+
+  @media (min-width: 40rem) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    .field-note { grid-column: 1 / -1; }
+  }
+</style>

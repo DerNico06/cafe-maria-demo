@@ -1,0 +1,165 @@
+---
+// Contact & reservation. Rendered on demand because the form posts to the reserve action.
+import { actions, isInputError } from 'astro:actions';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ChalkBoard from '../components/ChalkBoard.astro';
+import ReservationForm from '../components/ReservationForm.astro';
+import { site } from '../data/site';
+import { getOpeningHours, formatHours } from '../data/hours';
+import { formatDate } from '../data/reservation';
+
+export const prerender = false;
+
+const result = Astro.getActionResult(actions.reserve);
+const done = result && !result.error ? result.data : undefined;
+
+let errors: Record<string, string | undefined> = {};
+let formError: string | undefined;
+let values: Record<string, string> = {};
+if (result?.error) {
+  if (isInputError(result.error)) {
+    errors = Object.fromEntries(Object.entries(result.error.fields).map(([k, v]) => [k, v?.[0]]));
+  } else {
+    formError = result.error.message;
+  }
+  // Astro hands the action a clone of the request, so the original body is still readable here.
+  const data = await Astro.request.formData().catch(() => undefined);
+  if (data) {
+    for (const key of ['name', 'email', 'phone', 'date', 'time', 'guests', 'note']) {
+      const v = data.get(key);
+      if (typeof v === 'string') values[key] = v;
+    }
+  }
+}
+
+const hours = await getOpeningHours();
+const { street, zip, city } = site.address;
+---
+
+<BaseLayout
+  title="Kontakt & Reservierung | Café Maria"
+  description="Tisch im Café Maria reservieren: Online-Anfrage, Telefon, Adresse in Wien-Neubau und Öffnungszeiten auf einen Blick."
+  noindex={Boolean(result)}
+>
+  <div class="page">
+    <header class="intro">
+      <h1>Kontakt & Reservierung</h1>
+      <p>Reservieren Sie online oder rufen Sie uns an. Wir freuen uns auf Ihren Besuch.</p>
+    </header>
+
+    <div class="layout">
+      <section class="booking" id="reservierung" aria-labelledby="reservierung-title" tabindex={done ? -1 : undefined}>
+        {done ? (
+          <>
+            <h2 id="reservierung-title">Danke, {done.name}!</h2>
+            <p class="lead">
+              Ihre Anfrage für {formatDate(done.date)} um {done.time} Uhr, {done.guests}
+              {done.guests === 1 ? ' Person' : ' Personen'}, ist bei uns eingegangen.
+            </p>
+
+            <figure class="mail-preview">
+              <figcaption>
+                Vorschau der Bestätigung an den Gast. In dieser Demo wird keine E-Mail an Sie verschickt.
+              </figcaption>
+              <dl class="mail-head">
+                <div><dt>An</dt><dd>{done.email}</dd></div>
+                <div><dt>Betreff</dt><dd>Ihre Reservierung im {site.name}</dd></div>
+              </dl>
+              <div class="mail-body">
+                <p>Guten Tag {done.name},</p>
+                <p>
+                  vielen Dank für Ihre Reservierung am {formatDate(done.date)} um {done.time} Uhr für {done.guests}
+                  {done.guests === 1 ? ' Person' : ' Personen'}.
+                </p>
+                {done.note && <p>Ihre Anmerkung: „{done.note}“</p>}
+                <p>Falls Sie doch nicht kommen können, rufen Sie uns bitte kurz an: {site.phone.display}.</p>
+                <p>Herzliche Grüße<br />Ihr Team vom {site.name}</p>
+              </div>
+            </figure>
+
+            <a class="btn btn-outline" href="/kontakt#reservierung">Weitere Reservierung</a>
+          </>
+        ) : (
+          <>
+            <h2 id="reservierung-title">Tisch reservieren</h2>
+            <p class="lead">Alle Felder außer der Anmerkung sind Pflichtfelder.</p>
+            <ReservationForm errors={errors} formError={formError} values={values} />
+          </>
+        )}
+      </section>
+
+      <aside class="info" aria-label="Kontaktdaten und Öffnungszeiten">
+        <ChalkBoard as="section" class="board" aria-labelledby="zeiten-title">
+          <h2 id="zeiten-title">Öffnungszeiten</h2>
+          <dl class="hours">
+            {hours.map((h) => (
+              <div><dt>{h.label}</dt><dd>{formatHours(h)}</dd></div>
+            ))}
+          </dl>
+        </ChalkBoard>
+
+        <section class="contact" aria-labelledby="kontakt-title">
+          <h2 id="kontakt-title">So erreichen Sie uns</h2>
+          <address>
+            {site.name}<br />
+            {street}<br />
+            {zip} {city}
+          </address>
+          <p>Telefon: <a href={site.phone.href}>{site.phone.display}</a></p>
+          <p>E-Mail: <a href={`mailto:${site.email}`}>{site.email}</a></p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding: var(--space-xl) var(--gutter) var(--space-2xl);
+  }
+
+  .intro h1 { font-size: var(--text-3xl); }
+  .intro p { margin-top: var(--space-s); color: var(--color-mokka-soft); }
+
+  .layout { display: grid; gap: var(--space-xl); margin-top: var(--space-xl); }
+
+  h2 { font-size: var(--text-2xl); }
+  .lead { margin-block: var(--space-xs) var(--space-l); color: var(--color-mokka-soft); }
+
+  .booking:focus { outline: none; }
+
+  .mail-preview {
+    margin: 0 0 var(--space-l);
+    border: 1px solid color-mix(in srgb, var(--color-brass) 60%, transparent);
+    border-radius: var(--radius-m);
+    background: var(--color-creme-light);
+  }
+  .mail-preview figcaption {
+    padding: var(--space-s) var(--space-m);
+    border-bottom: 1px dashed var(--color-brass);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-mokka-soft);
+  }
+  .mail-head { padding: var(--space-s) var(--space-m) 0; font-size: var(--text-sm); }
+  .mail-head div { display: flex; gap: var(--space-s); }
+  .mail-head dt { min-width: 4.5rem; color: var(--color-mokka-soft); }
+  .mail-head dd { overflow-wrap: anywhere; }
+  .mail-body { display: grid; gap: var(--space-s); padding: var(--space-m); overflow-wrap: anywhere; }
+
+  .info { display: grid; gap: var(--space-xl); align-content: start; }
+  .board { padding: var(--space-l); }
+  .board h2 { text-shadow: 0 0 1px rgb(238 234 224 / 0.6); }
+  .hours { display: grid; gap: var(--space-xs); margin-top: var(--space-m); }
+  .hours div { display: flex; justify-content: space-between; gap: var(--space-m); flex-wrap: wrap; }
+  .hours dd { font-variant-numeric: tabular-nums; color: var(--color-gold); }
+
+  .contact address { margin-top: var(--space-s); font-style: normal; }
+  .contact p { margin-top: var(--space-xs); }
+
+  @media (min-width: 60rem) {
+    .layout { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+  }
+</style>
