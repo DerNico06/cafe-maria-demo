@@ -17,6 +17,8 @@ Die Seite dient als Referenz für Restaurant- und Café-Besitzer.
 - **Kein UI-Framework** (React/Vue/…) und **keine UI- oder CSS-Bibliotheken** (kein Tailwind, kein Bootstrap). Nur reines CSS.
 - **Mehrseitig:** Startseite, Speisekarte, Über uns, Galerie, Kontakt & Reservierung, Impressum, Datenschutz
 - **Hosting:** Vercel, vorerst unter einer `*.vercel.app`-URL (noch keine eigene Domain)
+  - **Stand:** Noch kein Deployment, das Projekt läuft nur lokal im Dev-Modus. Vercel-Schritte (Env-Variablen, Preview-Tests) entfallen bis dahin.
+  - **Erinnerung:** Wenn alle Seiten fertig sind, den Nutzer ans erste Deployment erinnern: Vercel-Projekt anlegen, `RESEND_API_KEY` und `RESERVATION_TO` setzen, Formular auf der Live-URL testen.
 - **Formular:** Astro Action mit Validierung auf dem Server, Mailversand über Resend
   - Die Reservierungsmail geht an die eigene Adresse des Betreibers.
   - Die Gast-Bestätigung wird **nur als Vorschau** auf der Erfolgsseite angezeigt und nicht verschickt. Sonst ließe sich die Demo missbrauchen, um Mails an fremde Adressen zu schicken.
