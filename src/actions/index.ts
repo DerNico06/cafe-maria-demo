@@ -1,7 +1,7 @@
 import { defineAction, ActionError } from 'astro:actions';
 import { RESEND_API_KEY, RESERVATION_FROM, RESERVATION_TO } from 'astro:env/server';
-import { getOpeningHours, formatTime } from '../data/hours';
-import { reservationSchema, formatDate, type Reservation } from '../data/reservation';
+import { getOpeningHours } from '../data/hours';
+import { reservationSchema, checkBooking, formatDate, type Reservation } from '../data/reservation';
 import { site } from '../data/site';
 
 const MIN_FILL_MS = 3_000;
@@ -24,25 +24,10 @@ function isRateLimited(ip: string, now = Date.now()) {
   return false;
 }
 
-/** "19:00" -> "18:00": the last table we take is one hour before closing. */
-const hourBefore = (time: string) => `${String(Number(time.slice(0, 2)) - 1).padStart(2, '0')}${time.slice(2)}`;
-
-// Server-only rule: opening hours live in a content collection, which the browser cannot read.
+// Same rule as the form script; only the server reads the hours from the content collection itself.
 const input = reservationSchema.superRefine(async (r, ctx) => {
-  const weekday = new Date(`${r.date}T12:00:00Z`).getUTCDay();
-  const day = (await getOpeningHours()).find((h) => h.days.includes(weekday));
-  if (!day?.open || !day.close) {
-    ctx.addIssue({ code: 'custom', path: ['date'], message: `${day?.label ?? 'An diesem Tag'} ist Ruhetag. Bitte wählen Sie einen anderen Tag.` });
-    return;
-  }
-  const last = hourBefore(day.close);
-  if (r.time < day.open || r.time > last) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['time'],
-      message: `An diesem Tag nehmen wir Reservierungen von ${formatTime(day.open)} bis ${formatTime(last)} Uhr an.`,
-    });
-  }
+  const issue = checkBooking(await getOpeningHours(), r.date, r.time);
+  if (issue) ctx.addIssue({ code: 'custom', path: [issue.path], message: issue.message });
 });
 
 const mailText = (r: Omit<Reservation, 'website' | 'startedAt'>) =>

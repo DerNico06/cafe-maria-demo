@@ -1,7 +1,8 @@
 ---
 // Reservation form. Works without JS (server validation via the action); the script only shows the same errors earlier.
 import { actions } from 'astro:actions';
-import { MAX_GUESTS, BOOKING_DAYS_AHEAD, viennaNow, addDays } from '../data/reservation';
+import { MAX_GUESTS, SLOT_GROUPS, allSlots, bookingDays, formatDate, formatTime, slotGroup } from '../data/reservation';
+import { getOpeningHours } from '../data/hours';
 
 interface Props {
   /** First error message per field, from the server. */
@@ -13,14 +14,28 @@ interface Props {
 }
 
 const { errors = {}, formError, values = {} } = Astro.props;
-const today = viennaNow().date;
+const hours = await getOpeningHours();
+
+// Closed days stay in the row (disabled) so the week keeps its shape.
+const part = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('de-AT', { ...options, timeZone: 'UTC' });
+const [weekday, dayNum, month] = [part({ weekday: 'short' }), part({ day: 'numeric' }), part({ month: 'short' })];
+const days = bookingDays(hours).map((d) => {
+  const noon = new Date(`${d.date}T12:00:00Z`);
+  return { ...d, weekday: weekday.format(noon), day: dayNum.format(noon), month: month.format(noon) };
+});
+
+// Every slot of the week; the script disables those outside the chosen day. Without JS the server checks.
+const slots = allSlots(hours);
+const slotGroups = SLOT_GROUPS.map((label) => ({ label, slots: slots.filter((t) => slotGroup(t) === label) })).filter(
+  (g) => g.slots.length > 0,
+);
 
 const fields = [
   { name: 'name', label: 'Name', type: 'text', autocomplete: 'name' },
   { name: 'email', label: 'E-Mail', type: 'email', autocomplete: 'email' },
   { name: 'phone', label: 'Telefon', type: 'tel', autocomplete: 'tel', hint: 'Für Rückfragen zu Ihrer Reservierung.' },
-  { name: 'date', label: 'Datum', type: 'date', min: today, max: addDays(today, BOOKING_DAYS_AHEAD) },
-  { name: 'time', label: 'Uhrzeit', type: 'time', step: 900 },
+  { name: 'date', label: 'Datum', choice: true },
+  { name: 'time', label: 'Uhrzeit', choice: true },
   { name: 'guests', label: 'Personen', type: 'number', min: 1, max: MAX_GUESTS, inputmode: 'numeric', hint: `1 bis ${MAX_GUESTS} Personen, größere Gruppen bitte telefonisch.` },
 ] as const;
 
@@ -36,6 +51,7 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
   action={`${actions.reserve.queryString}#reservierung`}
   novalidate
   data-reservation-form
+  data-hours={JSON.stringify(hours)}
 >
   <div class="error-summary" tabindex="-1" hidden={!hasErrors} data-error-summary>
     <h3>Bitte prüfen Sie Ihre Angaben</h3>
@@ -47,6 +63,58 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
 
   <div class="grid">
     {fields.map((f) => {
+      if ('choice' in f) {
+        // Native radios in a radiogroup: arrow keys move between them and skip disabled ones.
+        return (
+          <fieldset
+            id={`res-${f.name}`}
+            class:list={['field', 'choice', `field-${f.name}`]}
+            role="radiogroup"
+            aria-required="true"
+            aria-describedby={`${f.name}-error`}
+            aria-invalid={errors[f.name] ? 'true' : undefined}
+          >
+            <legend>{f.label}</legend>
+            {f.name === 'date' ? (
+              <div class="days">
+                {days.map((d) => (
+                  <label class="day">
+                    <input
+                      class="visually-hidden"
+                      type="radio"
+                      name="date"
+                      value={d.date}
+                      required
+                      checked={values.date === d.date}
+                      disabled={d.closed}
+                      aria-label={`${formatDate(d.date)}${d.closed ? ', geschlossen' : ''}`}
+                    />
+                    <span class="day-weekday" aria-hidden="true">{d.weekday}</span>
+                    <span class="day-num" aria-hidden="true">{d.day}</span>
+                    <span class="day-month" aria-hidden="true">{d.month}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              slotGroups.map((g) => (
+                <div class="slot-group" role="group" aria-labelledby={`slots-${g.label}`}>
+                  <p class="slot-label" id={`slots-${g.label}`}>{g.label}</p>
+                  <div class="chips">
+                    {g.slots.map((t) => (
+                      <label class="chip">
+                        <input class="visually-hidden" type="radio" name="time" value={t} required checked={values.time === t} />
+                        <span>{formatTime(t)}</span>
+                        <span class="visually-hidden"> Uhr</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+            <p class="field-error" id={`${f.name}-error`}>{errors[f.name]}</p>
+          </fieldset>
+        );
+      }
       const hint = 'hint' in f ? f.hint : undefined;
       return (
         <div class:list={['field', `field-${f.name}`]}>
@@ -61,7 +129,6 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
             autocomplete={'autocomplete' in f ? f.autocomplete : undefined}
             min={'min' in f ? f.min : undefined}
             max={'max' in f ? f.max : undefined}
-            step={'step' in f ? f.step : undefined}
             inputmode={'inputmode' in f ? f.inputmode : undefined}
             aria-describedby={describedBy(f.name, hint)}
             aria-invalid={errors[f.name] ? 'true' : undefined}
@@ -97,10 +164,27 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
 </form>
 
 <script>
-  import { reservationSchema } from '../data/reservation';
+  import { reservationSchema, checkBooking, slotsFor } from '../data/reservation';
+  import type { OpeningHours } from '../data/hours';
 
   const form = document.querySelector<HTMLFormElement>('[data-reservation-form]');
   const summary = form?.querySelector<HTMLElement>('[data-error-summary]');
+  const hours: OpeningHours[] = JSON.parse(form?.dataset.hours ?? '[]');
+
+  // Only the slots of the chosen day stay enabled; a choice that no longer fits is cleared.
+  function limitTimes() {
+    if (!form) return;
+    const date = form.querySelector<HTMLInputElement>('input[name="date"]:checked')?.value;
+    const allowed = date ? slotsFor(hours, date) : null;
+    for (const chip of form.querySelectorAll<HTMLInputElement>('input[name="time"]')) {
+      chip.disabled = allowed !== null && !allowed.includes(chip.value);
+      if (chip.disabled) chip.checked = false;
+    }
+  }
+  form?.addEventListener('change', (event) => {
+    if (event.target instanceof HTMLInputElement && event.target.name === 'date') limitTimes();
+  });
+  limitTimes();
 
   // After a failed server round trip, move focus to the errors so screen readers announce them.
   // Waits for load: the #reservierung fragment scroll runs after module scripts and would reset focus to <body>.
@@ -111,8 +195,9 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
     for (const el of form.querySelectorAll<HTMLElement>('.field-error')) {
       const name = el.id.replace(/-error$/, '');
       el.textContent = messages.get(name) ?? '';
-      const input = form.elements.namedItem(name);
-      if (input instanceof HTMLElement) {
+      // The input itself, or the fieldset for date and time.
+      const input = document.getElementById(`res-${name}`);
+      if (input) {
         if (messages.has(name)) input.setAttribute('aria-invalid', 'true');
         else input.removeAttribute('aria-invalid');
       }
@@ -124,7 +209,7 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
           const li = document.createElement('li');
           const a = document.createElement('a');
           a.href = `#res-${name}`;
-          a.textContent = `${form.querySelector(`label[for="res-${name}"]`)?.firstChild?.textContent?.trim()}: ${msg}`;
+          a.textContent = `${form.querySelector(`label[for="res-${name}"], #res-${name} > legend`)?.firstChild?.textContent?.trim()}: ${msg}`;
           li.append(a);
           return li;
         }),
@@ -136,7 +221,8 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
   form?.addEventListener('submit', (event) => {
     event.preventDefault();
     const result = reservationSchema.safeParse(Object.fromEntries(new FormData(form)));
-    if (result.success) {
+    const booking = result.success ? checkBooking(hours, result.data.date, result.data.time) : null;
+    if (result.success && !booking) {
       const button = form.querySelector<HTMLButtonElement>('[data-submit]');
       if (button) {
         // Prevents a second mail from a double click while the page loads.
@@ -147,8 +233,8 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
       return;
     }
     // First message per field, same as the server shows.
-    const messages = new Map<string, string>();
-    for (const issue of result.error.issues) {
+    const messages = new Map<string, string>(booking ? [[booking.path, booking.message]] : []);
+    for (const issue of result.error?.issues ?? []) {
       const name = String(issue.path[0]);
       if (!messages.has(name)) messages.set(name, issue.message);
     }
@@ -167,7 +253,7 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
   .optional, .hint { font-weight: 400; color: var(--color-mokka-soft); }
   .hint { font-size: var(--text-sm); }
 
-  input, textarea {
+  input:not([type='radio']), textarea {
     width: 100%;
     min-height: 2.75rem;
     padding: var(--space-xs) var(--space-s);
@@ -178,6 +264,66 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
   }
   textarea { resize: vertical; }
   [aria-invalid='true'] { border-color: var(--color-error); }
+
+  /* Date tiles and time chips: the label is the control, the native radio is visually hidden inside it. */
+  .choice { min-width: 0; margin: 0; padding: 0; border: 0; }
+  legend { padding: 0; margin-bottom: var(--space-xs); font-weight: 600; }
+
+  .day, .chip {
+    position: relative; /* keeps the hidden radio inside, so focus scrolls the tile into view */
+    border: 2px solid var(--color-mokka-soft);
+    background: var(--color-creme-light);
+    color: var(--color-mokka);
+    cursor: pointer;
+    text-align: center;
+  }
+  .day:hover, .chip:hover { border-color: var(--color-mokka); }
+  .day:has(:checked), .chip:has(:checked) {
+    border-color: var(--color-green);
+    background: var(--color-green);
+    color: var(--color-creme-light);
+  }
+  .day:has(:focus-visible), .chip:has(:focus-visible) { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+  .day:has(:disabled), .chip:has(:disabled) {
+    border-style: dashed;
+    border-color: var(--color-mokka-soft);
+    background: transparent;
+    color: var(--color-mokka-soft);
+    text-decoration: line-through;
+    cursor: not-allowed;
+  }
+  .choice[aria-invalid='true'] :is(.day, .chip):not(:has(:disabled)) { border-color: var(--color-error); }
+
+  /* Mobile: one swipeable row. Padding leaves room for the focus ring inside the scroll box. */
+  .days {
+    display: flex;
+    gap: var(--space-xs);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: var(--space-xs) var(--space-2xs);
+  }
+  .day {
+    flex: 0 0 4.25rem;
+    scroll-snap-align: start;
+    display: grid;
+    justify-items: center;
+    padding: var(--space-xs) var(--space-2xs);
+    border-radius: var(--radius-m);
+  }
+  .day { font-weight: 400; }
+  .day-weekday, .day-month { font-size: var(--text-sm); }
+  .day-num { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-tight); }
+
+  .slot-group + .slot-group { margin-top: var(--space-s); }
+  .slot-label { margin-bottom: var(--space-2xs); font-size: var(--text-sm); color: var(--color-mokka-soft); }
+  .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr)); gap: var(--space-xs); }
+  .chip {
+    display: grid;
+    place-items: center;
+    min-height: 2.75rem;
+    border-radius: var(--radius-s);
+    font-variant-numeric: tabular-nums;
+  }
 
   .field-error { color: var(--color-error); font-size: var(--text-sm); font-weight: 600; }
   .field-error:empty { display: none; }
@@ -200,6 +346,8 @@ const describedBy = (name: string, hint?: string) => [hint && `${name}-hint`, `$
 
   @media (min-width: 40rem) {
     .grid { grid-template-columns: 1fr 1fr; }
-    .field-note { grid-column: 1 / -1; }
+    .field-note, .choice { grid-column: 1 / -1; }
+    /* Desktop: both weeks at once, no scrolling or arrow buttons needed. */
+    .days { display: grid; grid-template-columns: repeat(7, 1fr); overflow: visible; padding: 0; }
   }
 </style>

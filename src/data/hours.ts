@@ -17,8 +17,9 @@ export async function getOpeningHours(): Promise<OpeningHours[]> {
   return hours;
 }
 
-/** "08:00" -> "8:00" for display. */
-export const formatTime = (time: string) => time.replace(/^0/, '');
+// Lives with the booking rules so the browser can use it without pulling in astro:content.
+import { formatTime } from './reservation';
+export { formatTime };
 
 export const formatHours = (h: OpeningHours) =>
   h.open && h.close ? `${formatTime(h.open)} – ${formatTime(h.close)}` : 'Ruhetag';
